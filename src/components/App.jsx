@@ -1,22 +1,20 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Searchbar } from './Searchbar/Searchbar';
 
-export class App extends Component {
-  state = {
-    searchValue: '',
+
+export const App = () => {
+  const [searchValue, setSearchValue] = useState('')
+  
+  const handleSearch = searchValue => {
+    setSearchValue(searchValue);
   };
 
-  handleSearch = searchValue => {
-    this.setState({ searchValue });
-  };
-
-  render() {
     return (
       <>
-        <Searchbar handleSearch={this.handleSearch} />
-        <ImageGallery searchValue={this.state.searchValue} />
+        <Searchbar handleSearch={handleSearch} />
+        <ImageGallery searchValue={searchValue} />
       </>
     );
   }
-}
+

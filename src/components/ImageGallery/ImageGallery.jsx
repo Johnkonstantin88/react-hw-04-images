@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import Notiflix from 'notiflix';
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import { getPictures } from 'servises/getPictures';
@@ -7,23 +7,20 @@ import { Loader } from 'components/Loader/Loader';
 import { Button } from 'components/Button/Button';
 import { Modal } from 'components/Modal/Modal';
 
-export class ImageGallery extends Component {
-  state = {
-    pictures: [],
-    isLoading: false,
-    currentPage: 1,
-    isShowModal: false,
-    pictureValue: '',
-  };
+export const ImageGallery = ({ searchValue }) => {
+  const [pictures, setPictures] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isShowModal, setIsShowModal] = useState(false);
+  const [pictureValue, setPictureValue] = useState('');
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevProps.searchValue !== this.props.searchValue) {
-      this.setState({
-        pictures: [],
-        isLoading: true,
-        currentPage: 1,
-      });
-      getPictures(this.props.searchValue)
+  useEffect(() => {
+    if (searchValue) {
+      setPictures([]);
+      setIsLoading(true);
+      setCurrentPage(1);
+
+      getPictures(searchValue)
         .then(r => {
           if (!r.ok) {
             throw new Error(r.type);
@@ -38,21 +35,20 @@ export class ImageGallery extends Component {
               'Sorry, there are no images matching your search query. Please try again.'
             );
           }
-          this.setState({ pictures: hits });
+          setPictures(hits);
         })
-        .catch(this.onShowError)
+        .catch(onShowError)
         .finally(() => {
-          this.setState({ isLoading: false });
+          setIsLoading(false);
         });
-    }
-  }
+    } 
+  }, [searchValue]);
 
-  onLoadMore = () => {
-    this.setState(prevState => ({
-      currentPage: (prevState.currentPage += 1),
-      isLoading: true,
-    }));
-    getPictures(this.props.searchValue, this.state.currentPage)
+  const onLoadMore = () => {
+    setCurrentPage(prevPage => prevPage + 1);
+    setIsLoading(true);
+
+    getPictures(searchValue, currentPage)
       .then(r => {
         if (!r.ok) {
           throw new Error(r.type);
@@ -62,17 +58,15 @@ export class ImageGallery extends Component {
       .then(data => {
         const { hits } = data;
 
-        this.setState(prevState => ({
-          pictures: [...prevState.pictures, ...hits],
-        }));
+        setPictures(prevPictures => [...prevPictures, ...hits]);
       })
-      .catch(this.onShowError)
+      .catch(onShowError)
       .finally(() => {
-        this.setState({ isLoading: false });
+        setIsLoading(false);
       });
   };
 
-  onShowError = err => {
+  const onShowError = err => {
     Notiflix.Notify.failure(`${err.name}: ${err.message}`, {
       timeout: 5000,
       width: '300px',
@@ -80,44 +74,36 @@ export class ImageGallery extends Component {
     });
   };
 
-  onShowModal = e => {
-    this.setState({ isShowModal: true });
-    const filteredPicture = this.state.pictures.filter(
+  const onShowModal = e => {
+    setIsShowModal(true);
+    const filteredPicture = pictures.filter(
       ({ webformatURL }) => e.target.src === webformatURL
     );
-    this.setState({ pictureValue: filteredPicture[0] });
+    setPictureValue(filteredPicture[0]);
   };
 
-  onCLoseModal = () => {
-    this.setState({ isShowModal: false });
+  const onCLoseModal = () => {
+    setIsShowModal(false);
   };
 
-  render() {
-    const { pictures, isLoading, isShowModal } = this.state;
-    return (
-      <>
-        {isLoading && <Loader />}
-        <GalleryList>
-          {pictures &&
-            pictures.map(({ id, webformatURL, largeImageURL }, idx) => {
-              return (
-                <ImageGalleryItem
-                  key={idx}
-                  webformatURL={webformatURL}
-                  largeImageURL={largeImageURL}
-                  showModal={this.onShowModal}
-                />
-              );
-            })}
-        </GalleryList>
-        {pictures.length > 0 && <Button onLoadMore={this.onLoadMore} />}
-        {isShowModal && (
-          <Modal
-            value={this.state.pictureValue}
-            closeModal={this.onCLoseModal}
-          />
-        )}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      {isLoading && <Loader />}
+      <GalleryList>
+        {pictures &&
+          pictures.map(({ id, webformatURL, largeImageURL }, idx) => {
+            return (
+              <ImageGalleryItem
+                key={idx}
+                webformatURL={webformatURL}
+                largeImageURL={largeImageURL}
+                showModal={onShowModal}
+              />
+            );
+          })}
+      </GalleryList>
+      {pictures.length > 0 && <Button onLoadMore={onLoadMore} />}
+      {isShowModal && <Modal value={pictureValue} closeModal={onCLoseModal} />}
+    </>
+  );
+};

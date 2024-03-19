@@ -1,41 +1,50 @@
-import { Component } from "react";
-import { Header, SearchForm, SearchFormButton, SearchFormButtonLabel, SearchFormInput } from "./Searchbar.styled";
+import { useState } from 'react';
+import Notiflix from 'notiflix';
+import {
+  Header,
+  SearchForm,
+  SearchFormButton,
+  SearchFormButtonLabel,
+  SearchFormInput,
+} from './Searchbar.styled';
 
-export class Searchbar extends Component {
-    state = {
-        value: "",
+export const Searchbar = ({ handleSearch }) => {
+  const [value, setValue] = useState('');
+
+  const handleChange = ({ target: { value } }) => {
+    setValue(value);
+  };
+
+  const handleSubmit = e => {
+    e.preventDefault();
+
+    if (value === '') {
+      Notiflix.Notify.warning(
+        'Search field is empty. Please, enter your query.'
+      );
     }
 
-    handleChange = ({target: {value}}) => {
-        this.setState({ value });
-    }
+    handleSearch(value);
+    setValue('');
+  };
 
-    handleSubmit = (e) => {
-        e.preventDefault();
-        this.props.handleSearch(this.state.value)
-        this.setState({ value: '' });
-    }
+  return (
+    <Header>
+      <SearchForm onSubmit={handleSubmit}>
+        <SearchFormButton type="submit">
+          <SearchFormButtonLabel>Search</SearchFormButtonLabel>
+        </SearchFormButton>
 
-    render() {
-
-        return (
-            <Header >
-                <SearchForm onSubmit={this.handleSubmit}>
-                    <SearchFormButton type="submit" >
-                        <SearchFormButtonLabel >Search</SearchFormButtonLabel>
-                    </SearchFormButton>
-
-                    <SearchFormInput
-                        className="input"
-                        type="text"
-                        autoComplete="off"
-                        autoFocus
-                        placeholder="Search images and photos"
-                        onChange={this.handleChange}
-                        value={this.state.value}
-                    />
-                </SearchForm>
-            </Header>
-        )
-    }
-}
+        <SearchFormInput
+          className="input"
+          type="text"
+          autoComplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+          onChange={handleChange}
+          value={value}
+        />
+      </SearchForm>
+    </Header>
+  );
+};
