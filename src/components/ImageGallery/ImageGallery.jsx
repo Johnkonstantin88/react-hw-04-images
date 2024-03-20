@@ -13,6 +13,7 @@ export const ImageGallery = ({ searchValue }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isShowModal, setIsShowModal] = useState(false);
   const [pictureValue, setPictureValue] = useState('');
+  const [totalHits, setTotalHits] = useState(null);
 
   useEffect(() => {
     if (searchValue) {
@@ -28,7 +29,8 @@ export const ImageGallery = ({ searchValue }) => {
           return r.json();
         })
         .then(data => {
-          const { hits } = data;
+          console.log(data);
+          const { hits, totalHits } = data;
 
           if (hits.length < 1) {
             Notiflix.Notify.failure(
@@ -36,19 +38,22 @@ export const ImageGallery = ({ searchValue }) => {
             );
           }
           setPictures(hits);
+          setTotalHits(totalHits);
         })
         .catch(onShowError)
         .finally(() => {
           setIsLoading(false);
         });
-    } 
+    }
   }, [searchValue]);
 
   const onLoadMore = () => {
     setCurrentPage(prevPage => prevPage + 1);
     setIsLoading(true);
 
-    getPictures(searchValue, currentPage)
+    const nextPage = currentPage + 1;
+
+    getPictures(searchValue, nextPage)
       .then(r => {
         if (!r.ok) {
           throw new Error(r.type);
@@ -91,7 +96,7 @@ export const ImageGallery = ({ searchValue }) => {
       {isLoading && <Loader />}
       <GalleryList>
         {pictures &&
-          pictures.map(({ id, webformatURL, largeImageURL }, idx) => {
+          pictures.map(({ webformatURL, largeImageURL }, idx) => {
             return (
               <ImageGalleryItem
                 key={idx}
@@ -102,7 +107,9 @@ export const ImageGallery = ({ searchValue }) => {
             );
           })}
       </GalleryList>
-      {pictures.length > 0 && <Button onLoadMore={onLoadMore} />}
+      {pictures.length > 0 && pictures.length !== totalHits && (
+        <Button onLoadMore={onLoadMore} />
+      )}
       {isShowModal && <Modal value={pictureValue} closeModal={onCLoseModal} />}
     </>
   );

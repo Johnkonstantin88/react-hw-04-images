@@ -8,7 +8,7 @@ export const getPictures = (searchValue, page = 1) => {
     image_type: 'photo',
     orientation: 'horizontal',
     page: page,
-    per_page: `${picturesCountQuery}`,
+    per_page: picturesCountQuery,
   });
 
   return fetch(`${BASE_URL}?${params}`);
